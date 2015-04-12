@@ -5,27 +5,47 @@ import com.chatwork.quiz.MyOption
 sealed trait MyList[+A] {
 
   // Easy
-  def length: Int = ???
+  def length: Int = {
+    def go(x: MyList[A])(y: Int = 0): Int = x match {
+      case MyNil              => 0
+      case MyCons(head, tail) => go(tail)(y + 1)
+    }
+    go(this)(0)
+  }
 
   // Normal
-  def foldLeft[B](z: B)(f: (B, A) => B): B = ???
+  def foldLeft[B](z: B)(f: (B, A) => B): B = this match {
+    case MyNil              => z
+    case MyCons(head, tail) => tail.foldLeft(f(z, head))(f)
+  }
 
   // 難易度選択制
   // Normal: 条件 - 特にありません、気の向くままに実装してください。
   // Hard:   条件 - foldLeftを使って実装してください。
-  def foldRight[B](z: B)(f: (A, B) => B): B = ???
+  def foldRight[B](z: B)(f: (A, B) => B): B = this.reverse.foldLeft(z)((a, b) => f(b, a))
 
   // Normal
   // scalastyle:off
   def ::[B >: A](b: B): MyList[B] = ???
+
   // scalastyle:on
 
   // Normal
-  def reverse: MyList[A] = ???
+  def reverse: MyList[A] = {
+    def go(x: MyList[A])(y: MyList[A] = MyNil): MyList[A] = x match {
+      case MyNil              => y
+      case MyCons(head, tail) => go(tail)(MyCons(head, y))
+    }
+    this match {
+      case MyNil              => MyNil
+      case MyCons(head, tail) => go(tail)(MyCons(head, MyNil))
+    }
+  }
 
   // Normal
   // scalastyle:off
   def ++[B >: A](b: MyList[B]): MyList[B] = ???
+
   // scalastyle:on
 
   // Normal
@@ -56,9 +76,15 @@ case class MyCons[+A](head: A, tail: MyList[A]) extends MyList[A]
 object MyList {
 
   // Easy
-  def empty[A]: MyList[A] = ???
+  def empty[A]: MyList[A] = MyNil
 
   // Normal
-  def apply[A](as: A*): MyList[A] = ???
+  def apply[A](as: A*): MyList[A] = {
+    def go(as: A*)(l: MyList[A] = MyNil): MyList[A] = as.toList match {
+      case Nil          => l.reverse
+      case head :: tail => go(tail: _*)(MyCons(head, l))
+    }
+    go(as: _*)(MyNil)
+  }
 
 }
